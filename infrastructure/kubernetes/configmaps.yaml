@@ -1,0 +1,147 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: emotia-config
+  namespace: emotia
+data:
+  API_PORT: "8000"
+  WS_PORT: "8080"
+  REDIS_TTL: "3600"
+  MODEL_CACHE_SIZE: "10"
+  MAX_WORKERS: "4"
+  LOG_LEVEL: "INFO"
+  ENABLE_METRICS: "true"
+  METRICS_PORT: "9091"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: emotia
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    rule_files:
+      # - "first_rules.yml"
+      # - "second_rules.yml"
+
+    scrape_configs:
+      - job_name: 'emotia-backend'
+        static_configs:
+          - targets: ['emotia-backend-service:9091']
+
+      - job_name: 'emotia-frontend'
+        static_configs:
+          - targets: ['emotia-frontend-service:3000']
+
+      - job_name: 'redis'
+        static_configs:
+          - targets: ['redis-service:6379']
+
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: emotia
+data:
+  dashboard.json: |
+    {
+      "dashboard": {
+        "title": "EMOTIA System Overview",
+        "tags": ["emotia", "ml", "monitoring"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "title": "API Response Time",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"emotia-backend\"}[5m]))",
+                "legendFormat": "95th percentile"
+              }
+            ]
+          },
+          {
+            "title": "Active WebSocket Connections",
+            "type": "singlestat",
+            "targets": [
+              {
+                "expr": "websocket_active_connections",
+                "legendFormat": "Active connections"
+              }
+            ]
+          },
+          {
+            "title": "Model Inference Latency",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(model_inference_duration_seconds_sum[5m]) / rate(model_inference_duration_seconds_count[5m])",
+                "legendFormat": "Average latency"
+              }
+            ]
+          },
+          {
+            "title": "System Resource Usage",
+            "type": "row",
+            "panels": [
+              {
+                "title": "CPU Usage",
+                "type": "graph",
+                "targets": [
+                  {
+                    "expr": "rate(process_cpu_user_seconds_total[5m])",
+                    "legendFormat": "CPU usage"
+                  }
+                ]
+              },
+              {
+                "title": "Memory Usage",
+                "type": "graph",
+                "targets": [
+                  {
+                    "expr": "process_resident_memory_bytes / 1024 / 1024",
+                    "legendFormat": "Memory (MB)"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "refresh": "30s"
+      }
+    }

@@ -1,5 +1,11 @@
 import pytest
+import sys
+import os
 from fastapi.testclient import TestClient
+
+# Add the project root to the path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 from backend.main import app
 
 client = TestClient(app)

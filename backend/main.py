@@ -10,6 +10,11 @@ import asyncio
 from typing import List, Dict, Optional
 import time
 import logging
+import sys
+import os
+
+# Add parent directory to path for model imports
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from models.vision import VisionEmotionModel
 from models.audio import AudioEmotionModel
