@@ -1,0 +1,44 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+python-multipart==0.0.6
+
+# ML and AI
+torch==2.1.2
+torchvision==0.16.2
+torchaudio==2.1.2
+transformers==4.36.2
+datasets==2.15.0
+accelerate==0.25.0
+
+# Computer Vision
+opencv-python==4.8.1.78
+Pillow==10.1.0
+
+# Audio Processing
+librosa==0.10.1
+soundfile==0.12.1
+pyaudio==0.2.14
+
+# NLP and ASR
+speechbrain==0.5.16
+whisper-openai==20231117
+
+# Data Science
+numpy==1.26.2
+pandas==2.1.4
+scikit-learn==1.3.2
+matplotlib==3.8.2
+seaborn==0.13.0
+
+# Utilities
+tqdm==4.66.1
+requests==2.31.0
+python-dotenv==1.0.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# Optional for GPU
+# torchtext==0.16.2  # if needed
